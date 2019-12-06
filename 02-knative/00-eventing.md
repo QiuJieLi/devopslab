@@ -21,7 +21,7 @@ cd ~/devopslab/src/eventing/
 
 您可以使用下面的命令创建通知服务，请注意将`<your email address>`的部分替换为您的有效邮箱：
 ```
-kn service create --image docker.io/daisyycguo/servicenotifier mail-notifier --env EMAIL=<YOUR EMAIL>
+kn service create --image docker.io/daisyycguo/servicenotifier mail-notifier --env EMAIL=$EMAIL
 ```
 期待输出：
 ```
@@ -203,6 +203,8 @@ mytrigger   True                default   http://mail-notifier.default.svc.clust
 
 在前面的实验中，您已经可以完成通过Tekton自动构建和部署Knative服务。接下来，您可以再次构建和部署一个Knative服务，查看`mail-notifier`服务被唤醒。在等待几分钟后，可以在您的邮箱看到通知邮件。
 
+例如：您可以更新自己的devopslab repo中的 [src/app/hello.go](../src/app/hello.go)文件，将第17行修改为 `fmt.Fprintf(w, "%s\n", say("RED-IBM!!!"))` ，并且commit。  
+
 下面命令将列出所有运行的Pod，观察`mail-notifier`应用所在的Pod已经开始运行，运行命令：
 ```
 kubectl get pods
@@ -239,4 +241,6 @@ kubectl logs -f $(kubectl get pods --selector=serving.knative.dev/configuration=
 请注意，您可能会因为邮件延迟过长而无法短时收到邮件。只要看到日志正确输出，则表示程序运转正常。
 
 观察完毕，使用`ctrl + c`结束进程。
+
+恭喜您，您已经完成了Knative Eventing的实验。下面进行[Serving流量管控](./01-serving.md)
 

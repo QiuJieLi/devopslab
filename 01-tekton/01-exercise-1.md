@@ -1,7 +1,7 @@
-# exercise-1 Tekton - from source code to production 
+# 创建Tekton pipeline并手动运行 
 
 ## 实验目标
-- 了解Tekton pipelline的基本概念
+- 了解Tekton pipeline的基本概念
 - 创建一个pipeline来build和部署一个Knatvie的应用
 - 执行一个pipeline并查看状态
 - 问题诊断
@@ -16,24 +16,40 @@
 ![alt text](https://github.com/IBM/tekton-tutorial/blob/master/doc/source/images/crd.png)
 
 
-## 实验准备   
-### 1. [安装Istio和Knative](https://github.com/daisy-ycguo/devopslab/blob/master/00-install/istio-knative-install.md)   
-
-### 2. [Tekton安装](https://github.com/daisy-ycguo/devopslab/blob/master/00-install/tekton-install.md)  
-
-### 3. [准备Kubernetes集群环境](https://github.com/daisy-ycguo/devopslab/blob/master/00-install/01-k8s-connect.md)
+## 前提
+- [安装Istio和Knative](https://github.com/daisy-ycguo/devopslab/blob/master/00-install/istio-knative-install.md)   
+- [Tekton安装](https://github.com/daisy-ycguo/devopslab/blob/master/00-install/tekton-install.md)  
+- [准备Kubernetes集群环境](https://github.com/daisy-ycguo/devopslab/blob/master/00-install/01-k8s-connect.md)
 
 ## 实验步骤
-### 1. Fork devopslab 项目到您自己的repo并且clone到local workstation
-1. 登录您的github account。如果您没有github account, 请先注册一个账号，可参考： https://github.com/daisy-ycguo/devopslab/blob/master/00-install/apply-github-account.md
-2. 在浏览器中打开https://github.com/daisy-ycguo/devopslab 点击Fork。
-3. Fork成功后会跳转到您自己的github账户下的devopslab repo。点击"Clone or download",拷贝url。
-4. 在您的本地目录克隆以上的repository    
+### 第一步. clone代码到本地
+1. 在您的github代码库页面，点击"Clone or download"，获取URL。
+2. 将代码库clone到本地，在CloudShell窗口运行这个命令：    
 `git clone https://github.com/<your-git-account>/devopslab.git`
+3. 运行setenv.sh配置环境变量。在CloudShell中执行：
+```
+source devopslab/src/setenv.sh
+```
+4. 配置Cloud API Key。
+打开您本地保存的aipkey.json，拷贝apikey，在CloudShell中执行：
+```
+export APIKEY=<your_api_key>
+```
+例如，您的apikey.json中有：
+```
+"apikey": "abcedef123434"
+```
+则执行
+```
+export APIKEY=abcedef123434
+```
 
-### 2. 创建一个Task， 用于build一个image并push到您的container registry。 
-请执行命令：
-`kubectl apply -f devopslab/src/tekton/basic/tekton/tasks/source-to-image.yaml`
+### 第二步. 创建一个Task， 用于build一个image并push到您的container registry。 
+
+在CloudShell中请执行命令：
+```
+kubectl apply -f devopslab/src/tekton/basic/tekton/tasks/source-to-image.yaml
+```
 
 在这个步骤中， 我们创建了Task：devopslab/src/tekton/basic/tekton/tasks/source-to-image.yaml。
 
@@ -78,9 +94,12 @@ spec:
 - 后面我们会看到task是如何获得认证来puhs image到repository的。  
 
 
-### 3. 创建另一个Task来将image部署到Kubernetes cluster。  
-请执行命令：
-`kubectl apply -f devopslab/src/tekton/basic/tekton/tasks/deploy-using-kubectl.yaml`
+### 第三步. 创建另一个Task来将image部署到Kubernetes cluster。  
+
+在CloudShell中请执行命令：
+```
+kubectl apply -f devopslab/src/tekton/basic/tekton/tasks/deploy-using-kubectl.yaml
+```
 
 在这个步骤中， 我们创建了Task：devopslab/src/tekton/basic/tekton/tasks/deploy-using-kubectl.yaml。  
 
@@ -110,10 +129,12 @@ steps:
 ```
 
 
-### 4. 创建一个Pipeline来组合以上两个Task。   
+### 第四步. 创建一个Pipeline来组合以上两个Task。   
 
-请执行命令：    
-`kubectl apply -f devopslab/src/tekton/basic/tekton/pipeline/build-and-deploy-pipeline.yaml`
+在CloudShell中请执行命令：
+```  
+kubectl apply -f devopslab/src/tekton/basic/tekton/pipeline/build-and-deploy-pipeline.yaml
+```
 
 在这个步骤中， 我们创建了Pipeline：devopslab/src/tekton/basic/tekton/pipeline/build-and-deploy-pipeline.yaml。
 
@@ -176,7 +197,7 @@ spec:
 - Task之间的顺序用runAfter关键字来定义。在这个例子中，deploy-using-kubectl task需要在source-to-image task之后执行。    
 
 
-### 5. 创建PipelineRun和PipelineResources，并执行Pipeline  
+### 第五步. 创建PipelineRun和PipelineResources，并执行Pipeline  
 
 以上Task, Pipeline定义均为统一的模板文件，下面我们创建一个PipelineRun来指定input resource和parameters，用于真正执行这个pipeline。 
 
@@ -185,9 +206,12 @@ spec:
 Pipeline resouce 文件路径：
 
 * *请修改文件* devopslab/src/tekton/basic/tekton/resources/hello-git.yaml, 输入您的git-account信息；
-* 保存您的修改， *请执行*
+* 保存您的修改， 
 
-`kubectl apply -f devopslab/src/tekton/basic/tekton/resources/hello-git.yaml`  
+在CloudShell中请执行命令：
+```
+kubectl apply -f devopslab/src/tekton/basic/tekton/resources/hello-git.yaml
+```
 
 说明： 
 
@@ -213,19 +237,21 @@ Service account让pipeline可以访问被保护的资源-您私人的IBM contain
 
 * 在创建service account之前，我们先要创建一个secret,它含了对您的container registry进行操作所需要的认证信息。  
 
-请执行如下命令：
+在CloudShell中请执行命令：
 ```
-kubectl create secret docker-registry ibm-cr-push-secret --docker-server=$REGISTRY --docker-username=iamapikey --docker-password=$APIKEY --docker-email=$EMAIL
+kubectl create secret docker-registry ibm-cr-push-secret --docker-server=us.icr.io --docker-username=iamapikey --docker-password=$APIKEY --docker-email=$EMAIL
 ``` 
 
-其中$REGISTRY, $APIKEY, $EMAIL的值，在[Install相关的实验步骤](00-install/01-k8s-connect.md)已经设置过
+其中$APIKEY, $EMAIL的值在环境变量中配置过。
 
 * 创建service account。
 
-请执行命令 `kubectl apply -f devopslab/src/tekton/basic/tekton/pipeline-account.yaml`   
+在CloudShell中请执行命令：
+```
+kubectl apply -f devopslab/src/tekton/basic/tekton/pipeline-account.yaml
+``` 
 
 在这个步骤中，我们使用了devopslab/src/tekton/basic/tekton/pipeline-account.yaml创建service account. 
-
 ```
 apiVersion: v1
 kind: ServiceAccount
@@ -278,10 +304,11 @@ name: pipeline-account
 - 一个名为kube-api-secret的Secret,包含了用来访问Kubernetes API的认证信息信息，使得pipeline可以适用kubectl去操作您的kube cluster。   
 - 一个名为pipeline-role的Role和一个名为pipeline-role-binding的RoleBinding，提供给pipeline基于resource的访问控制权限来创建和修改Knative services。  
 
-#### 5.5 修改PipelineRun文件，替换`<REGISTRY>/<NAMESPACE>`为具体的值。
+#### 5.5 修改PipelineRun文件，替换`<NAMESPACE>`为具体的值。
+
 PipelineRun文件路径：devopslab/src/tekton/basic/tekton/run/hello-pipeline-run.yaml。 
 
-将文件中的`<REGISTRY>`和`<NAMESPACE>`用前述的变量值替换。 
+将文件中的`<NAMESPACE>`用前述的变量值替换。 
 ```
 apiVersion: tekton.dev/v1alpha1
 kind: PipelineRun
@@ -298,7 +325,7 @@ spec:
     - name: pathToYamlFile
       value: "src/tekton/basic/knative/hello.yaml"
     - name: imageUrl
-      value: <REGISTRY>/<NAMESPACE>/hello
+      value: us.icr.io/<NAMESPACE>/hello
     - name: imageTag
       value: "1.0"
   trigger:
@@ -314,15 +341,24 @@ spec:
 
 #### 5.6 执行Pipeline  
 
-请执行命令
-`kubectl create -f devopslab/src/tekton/basic/tekton/run/hello-pipeline-run.yaml`   
+在CloudShell中请执行命令：
+```
+kubectl create -f devopslab/src/tekton/basic/tekton/run/hello-pipeline-run.yaml
+```   
 
 #### 5.7  检查Pipeline Run的执行结果
 
 PipelineRun创建后没有一个固定的名字，每次执行的的时候会使用generateName的内容生成一个名字。kubectl会返回一个新生成的PipelineRun resource名字。   
-`pipelinerun.tekton.dev/hello-pr-ktc9j created`   
+`pipelinerun.tekton.dev/hello-pr-ktc9j created`  
 
-1. 检查taskruns的状态,直到的状态都是SUCCEEDED。（大概需要1-2分钟）
+1. 检查pipelinerun的状态，确保pipelinerun处在Running状态(REASON栏)。
+```
+$ kubectl get pr
+NAME             SUCCEEDED   REASON    STARTTIME   COMPLETIONTIME
+hello-pr-llpm4   Unknown     Running   4s
+```
+
+1. 检查taskrun的状态,直到的状态都变为True(SUCCEEDED)。（大概需要1-2分钟）
 ```
 $ kubectl get taskrun
 NAME                                     SUCCEEDED   REASON      STARTTIME   COMPLETIONTIME
@@ -336,14 +372,23 @@ $ kubectl get ksvc hello
 NAME    URL                                                                      LATESTCREATED   LATESTREADY   READY   REASON
 hello   http://hello-default.<CLUSTER-NAME>.us-south.containers.appdomain.cloud   hello-thjf9     hello-thjf9   True
 ```   
+请记录这里的Ingress-doman
+```
+export INGRESS=<CLUSTER-NAME>.us-south.containers.appdomain.cloud
+```
 
 3. 最后，访问应用。
 ```
-curl http://hello-default.<CLUSTER-NAME>.us-south.containers.appdomain.cloud
+curl http://hello-default.$INGRESS
 Hello world, this is BLUE-IBM!!!
 ```
 
-### 问题诊断
+恭喜您，您已经完成了Tekton第一个实验。下面可以开始[实验2](./02-exercise-2.md)
+
+### 参考资料
+
+#### 问题诊断
+
 如果以上步骤遇到问题，尝试下面的方法进行诊断：   
 1. 检查task run的状态。   
 ```
@@ -383,7 +428,8 @@ kubectl get ksvc
 $ kubectl describe ksvc hello
 ```
 
-6. 清理环境
+#### 清理环境
+
 如果以上步骤无法找到问题并解决，可以尝试清掉以上实验所创建的资源，重新开始。
 清理脚本：
 ```
@@ -395,6 +441,8 @@ kubectl delete secret ibm-cr-push-secret
 kubectl delete pipelinerun --all
 kubectl delete ksvc hello
 ```
+
+#### 备忘单
 
 所有实验步骤脚本：(确保需要更新的文件已经更新好）
 ```
